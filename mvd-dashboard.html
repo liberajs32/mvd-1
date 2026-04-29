@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="사건로그 MVD">
+<meta name="theme-color" content="#ffffff">
+<title>사건로그 MVD 대시보드</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #eeede9;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #9a9a96;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius: 10px;
+    --radius-lg: 14px;
+    --xp-color: #E89C2F;
+    --xp-light: #FDF3E0;
+    --green: #4A9E5C;
+    --green-light: #EAF3DE;
+    --green-border: #C0DD97;
+    --green-dark: #3B6D11;
+    --purple: #7F77DD;
+    --purple-light: #EEEDFE;
+    --purple-border: #CECBF6;
+    --purple-dark: #534AB7;
+    --red-light: #FCEBEB;
+    --red-border: #F7C1C1;
+    --red-dark: #A32D2D;
+    --orange-light: #FAEEDA;
+    --orange-border: #FAC775;
+    --orange-dark: #854F0B;
+    --orange-darker: #633806;
+    --pink: #D4537E;
+    --pink-light: #FBEAF0;
+    --pink-border: #F4C0D1;
+    --pink-dark: #993556;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #252523;
+      --bg3: #2e2e2b;
+      --text: #f0f0ec;
+      --text2: #9a9a94;
+      --text3: #6a6a64;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --xp-light: #3a2e10;
+      --green-light: #1a2e1c;
+      --green-border: #2a5c30;
+      --green-dark: #7ecb8a;
+      --purple-light: #1e1d3a;
+      --purple-border: #3d3a7a;
+      --purple-dark: #a8a4f0;
+      --red-light: #2e1a1a;
+      --red-border: #5c2e2e;
+      --red-dark: #f09090;
+      --orange-light: #2e2210;
+      --orange-border: #5c4018;
+      --orange-dark: #e0b060;
+      --orange-darker: #c89040;
+      --pink-light: #2e1a22;
+      --pink-border: #5c2a3e;
+      --pink-dark: #e880a8;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  .container { max-width: 480px; margin: 0 auto; padding: 0 0 80px; background: var(--bg3); min-height: 100vh; }
+  .header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 14px 16px 12px; position: sticky; top: 0; z-index: 100; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .brand { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; }
+  .streak-badge { display: flex; align-items: center; gap: 5px; background: var(--pink-light); border: 0.5px solid var(--pink-border); border-radius: 99px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--pink-dark); }
+  .xp-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .xp-num { font-size: 24px; font-weight: 700; color: var(--xp-color); }
+  .xp-max { font-size: 13px; color: var(--text3); }
+  .grade-badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; border: 0.5px solid; }
+  .g-bad { background: var(--red-light); color: var(--red-dark); border-color: var(--red-border); }
+  .g-mid { background: var(--orange-light); color: var(--orange-dark); border-color: var(--orange-border); }
+  .g-good { background: var(--green-light); color: var(--green-dark); border-color: var(--green-border); }
+  .g-perfect { background: var(--purple-light); color: var(--purple-dark); border-color: var(--purple-border); }
+  .bar-track { height: 6px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--xp-color); border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+  .section { padding: 16px 16px 0; }
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
+  .habit-list { display: flex; flex-direction: column; gap: 6px; }
+  .habit-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; -webkit-user-select: none; user-select: none; }
+  .habit-item:active { transform: scale(0.98); }
+  .habit-item.done { background: var(--green-light); border-color: var(--green-border); }
+  .habit-item.locked { opacity: 0.4; pointer-events: none; }
+  .habit-item.bonus { border-style: dashed; }
+  .check-circle { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; background: var(--bg); }
+  .habit-item.done .check-circle { background: var(--green); border-color: var(--green); }
+  .checkmark { display: none; width: 11px; height: 11px; }
+  .checkmark path { stroke: white; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .habit-item.done .checkmark { display: block; }
+  .habit-name { flex: 1; font-size: 14px; line-height: 1.3; color: var(--text); }
+  .habit-item.done .habit-name { color: var(--green-dark); }
+  .xp-pill { font-size: 11px; font-weight: 600; background: var(--xp-light); color: var(--xp-color); padding: 2px 8px; border-radius: 99px; flex-shrink: 0; }
+  .habit-item.done .xp-pill { background: var(--green-border); color: var(--green-dark); }
+  .lock-icon { font-size: 14px; flex-shrink: 0; }
+  .bonus-hint { font-size: 12px; color: var(--text3); padding: 10px 16px 0; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { background: var(--bg); border-radius: var(--radius); padding: 12px 14px; border: 0.5px solid var(--border); }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 700; color: var(--text); }
+  .cal-wrap { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 12px; }
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cal-month { font-size: 14px; font-weight: 600; color: var(--text); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-dow { font-size: 10px; color: var(--text3); text-align: center; padding: 2px 0 4px; }
+  .cal-day { aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--text3); }
+  .cal-day.today { border: 1.5px solid var(--xp-color); color: var(--text); font-weight: 700; }
+  .cal-day.cg-bad { background: var(--red-light); color: var(--red-dark); }
+  .cal-day.cg-mid { background: var(--orange-light); color: var(--orange-dark); }
+  .cal-day.cg-good { background: var(--green-light); color: var(--green-dark); }
+  .cal-day.cg-perfect { background: var(--purple-light); color: var(--purple-dark); }
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text3); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+  .chart-rows { display: flex; flex-direction: column; gap: 10px; }
+  .hb-row { display: flex; align-items: center; gap: 8px; }
+  .hb-name { font-size: 12px; color: var(--text2); width: 100px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hb-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
+  .hb-fill { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+  .hb-pct { font-size: 11px; color: var(--text3); width: 30px; text-align: right; font-weight: 600; }
+  .weak-box { background: var(--orange-light); border: 0.5px solid var(--orange-border); border-radius: var(--radius); padding: 12px 14px; }
+  .weak-title { font-size: 13px; font-weight: 600; color: var(--orange-dark); margin-bottom: 4px; }
+  .weak-msg { font-size: 13px; color: var(--orange-darker); line-height: 1.6; }
+  .reset-btn { width: 100%; margin-top: 8px; background: none; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 10px; font-size: 13px; color: var(--text3); cursor: pointer; font-family: inherit; }
+  .reset-btn:active { background: var(--bg2); }
+  .popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 999; display: flex; align-items: flex-start; justify-content: center; padding-top: 60px; }
+  .popup { background: var(--text); color: var(--bg); font-size: 14px; font-weight: 600; padding: 10px 22px; border-radius: 99px; opacity: 0; transform: translateY(-10px); transition: opacity 0.2s, transform 0.3s cubic-bezier(.4,0,.2,1); pointer-events: none; }
+  .popup.show { opacity: 1; transform: translateY(0); }
+  .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--bg); border-top: 0.5px solid var(--border); display: flex; z-index: 100; }
+  .tab-btn { flex: 1; padding: 10px 0 14px; background: none; border: none; cursor: pointer; font-size: 10px; color: var(--text3); display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: inherit; font-weight: 500; transition: color 0.15s; }
+  .tab-btn.active { color: var(--xp-color); }
+  .tab-icon { font-size: 18px; line-height: 1; }
+  .tab-page { display: none; }
+  .tab-page.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-top">
+      <span class="brand">사건로그 the Fact · MVD</span>
+      <div class="streak-badge">
+        <span>★</span>
+        <span id="streak-num">0</span>일 연속
+      </div>
+    </div>
+    <div class="xp-row">
+      <div><span class="xp-num" id="xp-total">0</span><span class="xp-max"> / 130 XP</span></div>
+      <span class="grade-badge g-bad" id="grade-badge">나쁜 날</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="xp-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="tab-page active" id="page-today">
+    <div class="section" style="padding-top:14px;">
+      <div class="section-title">핵심 습관</div>
+      <div class="habit-list" id="core-list"></div>
+    </div>
+    <div class="bonus-hint" id="bonus-hint">핵심 습관 3개 완료 시 보너스 미션 잠금해제</div>
+    <div class="section" style="padding-top:8px;">
+      <div class="section-title">보너스 미션</div>
+      <div class="habit-list" id="bonus-list"></div>
+    </div>
+    <div class="section" style="padding-top:14px;">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">완료 항목</div><div class="stat-val" id="done-count">0/8</div></div>
+        <div class="stat-card"><div class="stat-label">핵심 완료</div><div class="stat-val" id="core-count">0/5</div></div>
+        <div class="stat-card"><div class="stat-label">이번 달 좋은 날</div><div class="stat-val" id="good-days">0</div></div>
+        <div class="stat-card"><div class="stat-label">완벽한 날</div><div class="stat-val" id="perfect-days">0</div></div>
+      </div>
+    </div>
+    <div class="section" style="padding-top:14px;">
+      <button class="reset-btn" id="reset-btn">오늘 기록 초기화</button>
+    </div>
+  </div>
+
+  <div class="tab-page" id="page-calendar">
+    <div class="section" style="padding-top:14px;">
+      <div class="cal-wrap">
+        <div class="cal-header">
+          <span class="cal-month" id="cal-month"></span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red-light);border:0.5px solid var(--red-border)"></div>나쁜 날</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange-light);border:0.5px solid var(--orange-border)"></div>보통</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green-light);border:0.5px solid var(--green-border)"></div>좋은 날</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--purple-light);border:0.5px solid var(--purple-border)"></div>완벽한 날</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-page" id="page-stats">
+    <div class="section" style="padding-top:14px;">
+      <div class="section-title">주간 습관별 달성률</div>
+      <div class="chart-rows" id="habit-chart"></div>
+    </div>
+    <div class="section" style="padding-top:14px;">
+      <div class="section-title">약점 분석</div>
+      <div id="weak-analysis"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="popup-overlay"><div class="popup" id="popup"></div></div>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="today"><span class="tab-icon">✓</span>오늘</button>
+  <button class="tab-btn" data-tab="calendar"><span class="tab-icon">◻</span>달력</button>
+  <button class="tab-btn" data-tab="stats"><span class="tab-icon">↑</span>통계</button>
+</nav>
+
+<script>
+const TODAY = new Date();
+const todayStr = `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}-${String(TODAY.getDate()).padStart(2,'0')}`;
+const monthKey = `${TODAY.getFullYear()}-${TODAY.getMonth()+1}`;
+
+const HABITS = [
+  {id:'h1',name:'퇴근 후 30분 걷기',xp:20,core:true},
+  {id:'h2',name:'스크립트 500자 이상 작성',xp:30,core:true},
+  {id:'h3',name:'유튜브 트렌드 리서치 15분',xp:20,core:true},
+  {id:'h4',name:'물 1.5L 이상 마시기',xp:15,core:true},
+  {id:'h5',name:'자정 전 취침',xp:15,core:true},
+  {id:'b1',name:'썸네일 초안 1개 제작',xp:20,core:false},
+  {id:'b2',name:'숏폼 아이디어 3개 메모',xp:15,core:false},
+  {id:'b3',name:'경쟁 채널 영상 1편 분석',xp:15,core:false},
+];
+
+const BAR_COLORS = ['#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A'];
+
+const TIPS = {
+  h1:'퇴근길 한 정거장 일찍 내려 걸어오세요. 진입 장벽을 최소화하는 게 핵심입니다.',
+  h2:'출근 지하철에서 5줄만 적어도 스크립트 초안이 됩니다. 완벽보다 착수가 먼저입니다.',
+  h3:'귀가 버스에서 유튜브 트렌드 피드 훑기를 루틴화하세요.',
+  h4:'작업 시작 전 물 한 잔을 미리 책상에 놓는 환경 설계가 효과적입니다.',
+  h5:'11시 30분 알람을 지금 바로 설정해 두세요.',
+  b1:'썸네일 레퍼런스 1장 저장부터 시작하면 제작 허들이 낮아집니다.',
+  b2:'뉴스 헤드라인 스크롤 중 바로 메모앱에 3줄 아이디어를 적으세요.',
+  b3:'제목·썸네일·조회수 패턴만 체크해도 충분한 분석입니다.',
+};
+
+function ls(key,val){
+  if(val===undefined){try{return localStorage.getItem(key)}catch(e){return null}}
+  try{localStorage.setItem(key,val)}catch(e){}
+}
+
+function getState(){const r=ls('mvd_'+todayStr);return r?JSON.parse(r):{done:[]}}
+function setState(s){ls('mvd_'+todayStr,JSON.stringify(s))}
+function getMonth(){const r=ls('mvd_m_'+monthKey);return r?JSON.parse(r):{}}
+function setMonth(d){ls('mvd_m_'+monthKey,JSON.stringify(d))}
+function getWeek(){const r=ls('mvd_w7');return r?JSON.parse(r):{}}
+function setWeek(d){ls('mvd_w7',JSON.stringify(d))}
+function getStreak(){const r=ls('mvd_streak');return r?JSON.parse(r):{count:0,last:''}}
+function setStreak(s){ls('mvd_streak',JSON.stringify(s))}
+
+function calcXP(done){return HABITS.filter(h=>done.includes(h.id)).reduce((s,h)=>s+h.xp,0)}
+function getGrade(xp,done){
+  if(HABITS.filter(h=>h.core).every(h=>done.includes(h.id)))return'perfect';
+  if(xp>=80)return'good';
+  if(xp>=40)return'mid';
+  return'bad';
+}
+function gradeLabel(g){return{perfect:'완벽한 날',good:'좋은 날',mid:'보통',bad:'나쁜 날'}[g]}
+function gradeClass(g){return{perfect:'g-perfect',good:'g-good',mid:'g-mid',bad:'g-bad'}[g]}
+function gradeCalClass(g){return{perfect:'cg-perfect',good:'cg-good',mid:'cg-mid',bad:'cg-bad'}[g]}
+
+function showPopup(msg){
+  const el=document.getElementById('popup');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),1300);
+}
+
+function updateStreak(grade){
+  const s=getStreak();
+  const good=grade==='good'||grade==='perfect';
+  if(!good){setStreak(s);return;}
+  if(s.last===todayStr){setStreak(s);return;}
+  const prev=new Date(TODAY);prev.setDate(prev.getDate()-1);
+  const prevStr=`${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
+  s.count=s.last===prevStr?s.count+1:1;
+  s.last=todayStr;
+  setStreak(s);
+}
+
+function render(){
+  const state=getState();
+  const done=state.done;
+  const xp=calcXP(done);
+  const coreCount=HABITS.filter(h=>h.core&&done.includes(h.id)).length;
+  const bonusUnlocked=coreCount>=3;
+  const grade=getGrade(xp,done);
+
+  document.getElementById('xp-total').textContent=xp;
+  document.getElementById('xp-bar').style.width=Math.min(100,Math.round(xp/130*100))+'%';
+  const gb=document.getElementById('grade-badge');
+  gb.textContent=gradeLabel(grade);
+  gb.className='grade-badge '+gradeClass(grade);
+  document.getElementById('streak-num').textContent=getStreak().count;
+
+  const coreList=document.getElementById('core-list');
+  coreList.innerHTML='';
+  HABITS.filter(h=>h.core).forEach(h=>{
+    const d=done.includes(h.id);
+    const div=document.createElement('div');
+    div.className='habit-item'+(d?' done':'');
+    div.innerHTML=`<div class="check-circle"><svg class="checkmark" viewBox="0 0 11 9"><path d="M1 4.5l3.5 3L10 1"/></svg></div><span class="habit-name">${h.name}</span><span class="xp-pill">+${h.xp}</span>`;
+    div.addEventListener('click',()=>toggleHabit(h.id));
+    coreList.appendChild(div);
+  });
+
+  document.getElementById('bonus-hint').textContent=bonusUnlocked
+    ?'🔓 보너스 미션 잠금해제!'
+    :`핵심 ${coreCount}/3 완료 시 보너스 미션 잠금해제`;
+
+  const bonusList=document.getElementById('bonus-list');
+  bonusList.innerHTML='';
+  HABITS.filter(h=>!h.core).forEach(h=>{
+    const d=done.includes(h.id);
+    const div=document.createElement('div');
+    div.className='habit-item bonus'+(d?' done':'')+(!bonusUnlocked?' locked':'');
+    div.innerHTML=`<div class="check-circle"><svg class="checkmark" viewBox="0 0 11 9"><path d="M1 4.5l3.5 3L10 1"/></svg></div><span class="habit-name">${h.name}</span><span class="xp-pill">+${h.xp}</span>${!bonusUnlocked?'<span class="lock-icon">🔒</span>':''}`;
+    if(bonusUnlocked)div.addEventListener('click',()=>toggleHabit(h.id));
+    bonusList.appendChild(div);
+  });
+
+  document.getElementById('done-count').textContent=`${done.length}/${HABITS.length}`;
+  document.getElementById('core-count').textContent=`${coreCount}/5`;
+
+  const mData=getMonth();
+  document.getElementById('good-days').textContent=Object.values(mData).filter(g=>g==='good'||g==='perfect').length;
+  document.getElementById('perfect-days').textContent=Object.values(mData).filter(g=>g==='perfect').length;
+
+  renderCalendar(mData);
+  renderChart();
+  renderWeak();
+}
+
+function toggleHabit(id){
+  const state=getState();
+  const was=state.done.includes(id);
+  state.done=was?state.done.filter(x=>x!==id):[...state.done,id];
+  setState(state);
+
+  const xp=calcXP(state.done);
+  const grade=getGrade(xp,state.done);
+  const mData=getMonth();
+  mData[TODAY.getDate()]=grade;
+  setMonth(mData);
+  updateWeek(id,!was);
+  updateStreak(grade);
+
+  if(!was){
+    const h=HABITS.find(x=>x.id===id);
+    showPopup(`+${h.xp} XP 획득!`);
+  }
+  render();
+}
+
+function updateWeek(id,add){
+  const w=getWeek();
+  if(!w[id])w[id]=[];
+  const d=TODAY.getDay();
+  if(add){if(!w[id].includes(d))w[id].push(d);}
+  else{w[id]=w[id].filter(x=>x!==d);}
+  setWeek(w);
+}
+
+function renderCalendar(mData){
+  const m=TODAY.getMonth(),y=TODAY.getFullYear();
+  document.getElementById('cal-month').textContent=`${y}년 ${m+1}월`;
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+  ['일','월','화','수','목','금','토'].forEach(d=>{
+    const el=document.createElement('div');el.className='cal-dow';el.textContent=d;grid.appendChild(el);
+  });
+  const first=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
+  for(let i=0;i<first;i++){const el=document.createElement('div');el.style.aspectRatio='1';grid.appendChild(el);}
+  for(let d=1;d<=days;d++){
+    const el=document.createElement('div');el.className='cal-day';el.textContent=d;
+    if(d===TODAY.getDate())el.classList.add('today');
+    const g=mData[d];if(g)el.classList.add(gradeCalClass(g));
+    grid.appendChild(el);
+  }
+}
+
+function renderChart(){
+  const w=getWeek();
+  const chart=document.getElementById('habit-chart');
+  chart.innerHTML='';
+  HABITS.forEach((h,i)=>{
+    const days=w[h.id]?w[h.id].length:0;
+    const pct=Math.round(days/7*100);
+    const row=document.createElement('div');
+    row.className='hb-row';
+    row.innerHTML=`<span class="hb-name">${h.name}</span><div class="hb-track"><div class="hb-fill" style="width:${pct}%;background:${BAR_COLORS[i]}"></div></div><span class="hb-pct">${pct}%</span>`;
+    chart.appendChild(row);
+  });
+}
+
+function renderWeak(){
+  const w=getWeek();
+  let min=8,weak=null;
+  HABITS.forEach(h=>{const d=w[h.id]?w[h.id].length:0;if(d<min){min=d;weak=h;}});
+  const el=document.getElementById('weak-analysis');
+  if(!weak){el.innerHTML='';return;}
+  el.innerHTML=`<div class="weak-box"><div class="weak-title">가장 취약한 습관: ${weak.name}</div><div class="weak-msg">${TIPS[weak.id]}</div></div>`;
+}
+
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  if(confirm('오늘 기록을 초기화할까요?')){
+    ls('mvd_'+todayStr,JSON.stringify({done:[]}));render();
+  }
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tab=btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+    document.querySelectorAll('.tab-page').forEach(p=>p.classList.toggle('active',p.id==='page-'+tab));
+  });
+});
+
+render();
+</script>
+</body>
+</html>
